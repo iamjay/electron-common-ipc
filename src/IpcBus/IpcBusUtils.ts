@@ -95,6 +95,10 @@ export class Logger {
     }
 };
 
+// For each channel, we have the list/map of connections
+// For each connection, we have an uniq key (number or string) and the way to forward the data (socket or webContents)
+// For each connection, we have the number of listener associated (peerIds), play the role of a ref counter
+
 /** @internal */
 export class ChannelConnectionMap<T extends string | number> {
     private _name: string;
@@ -119,6 +123,10 @@ export class ChannelConnectionMap<T extends string | number> {
 
     public hasChannel(channel: string): boolean {
         return this._channelsMap.has(channel);
+    }
+
+    public addRefRegExp(channel: RegExp, connKey: T, conn: any, peerId: string, callback?: ChannelConnectionMap.MapHandler<T>) {
+        return this.addRef(channel.toString(), connKey, conn, peerId, callback);
     }
 
     public addRef(channel: string, connKey: T, conn: any, peerId: string, callback?: ChannelConnectionMap.MapHandler<T>) {
@@ -152,6 +160,10 @@ export class ChannelConnectionMap<T extends string | number> {
         if ((callback instanceof Function) === true) {
             callback(channel, peerId, connData);
         }
+    }
+
+    public _releaseRegExp(all: boolean, channel: RegExp, connKey: T, peerId: string, callback?: ChannelConnectionMap.MapHandler<T>) {
+        return this._release(all, channel.toString(), connKey, peerId, callback);
     }
 
     private _release(all: boolean, channel: string, connKey: T, peerId: string, callback?: ChannelConnectionMap.MapHandler<T>) {
@@ -228,8 +240,17 @@ export class ChannelConnectionMap<T extends string | number> {
         }
     }
 
+    public releaseRegExp(channel: RegExp, connKey: T, peerId: string, callback?: ChannelConnectionMap.MapHandler<T>) {
+        this._releaseRegExp(false, channel, connKey, peerId, callback);
+    }
+
     public release(channel: string, connKey: T, peerId: string, callback?: ChannelConnectionMap.MapHandler<T>) {
         this._release(false, channel, connKey, peerId, callback);
+    }
+
+    public releaseAllRegExp(channel: RegExp, connKey: T, peerId: string, callback?: ChannelConnectionMap.MapHandler<T>) {
+        Logger.enable && this._info(`releaseAllRegExp: connKey = ${connKey}`);
+        this._releaseRegExp(true, channel, connKey, peerId, callback);
     }
 
     public releaseAll(channel: string, connKey: T, peerId: string, callback?: ChannelConnectionMap.MapHandler<T>) {
@@ -268,9 +289,9 @@ export class ChannelConnectionMap<T extends string | number> {
             Logger.enable && this._warn(`forEachChannel: Unknown channel '${channel}' !`);
         }
         else {
-            connsMap.forEach((connData, connKey) => {
-                Logger.enable && this._info(`forEachChannel: '${channel}', connKey = ${connKey} (${connData.peerIds.size})`);
-                callback(connData, channel);
+            connsMap.forEach((conn, connKey) => {
+                Logger.enable && this._info(`forEachChannel: '${channel}', connKey = ${connKey} (${conn.peerIds.size})`);
+                callback(conn, channel);
             });
         }
     }
@@ -284,9 +305,9 @@ export class ChannelConnectionMap<T extends string | number> {
         }
 
         this._channelsMap.forEach((connsMap, channel: string) => {
-            connsMap.forEach((connData, connKey) => {
-                Logger.enable && this._info(`forEach: '${channel}', connKey = ${connKey} (${connData.peerIds.size})`);
-                callback(connData, channel);
+            connsMap.forEach((conn, connKey) => {
+                Logger.enable && this._info(`forEach: '${channel}', connKey = ${connKey} (${conn.peerIds.size})`);
+                callback(conn, channel);
             });
         });
     }

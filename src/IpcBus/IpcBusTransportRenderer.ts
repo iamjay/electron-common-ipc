@@ -109,9 +109,15 @@ export class IpcBusTransportRenderer extends IpcBusTransport {
         this._reset();
     }
 
-    ipcPushCommand(command: string, channel: string, ipcBusData: IpcBusData, args?: any[]): void {
+    ipcPushCommand(command: string, channel: string | RegExp, ipcBusData: IpcBusData, args?: any[]): void {
         if (this._ipcRenderer) {
-            this._ipcRenderer.send(IpcBusUtils.IPC_BUS_RENDERER_COMMAND, command, channel, this.peer, ipcBusData, args);
+            if (channel instanceof RegExp) {
+                ipcBusData.regExpChannel = true;
+                this._ipcRenderer.send(IpcBusUtils.IPC_BUS_RENDERER_COMMAND, command, channel.toString(), this.peer, ipcBusData, args);
+            }
+            else {
+                this._ipcRenderer.send(IpcBusUtils.IPC_BUS_RENDERER_COMMAND, command, channel, this.peer, ipcBusData, args);
+            }
         }
     }
 }

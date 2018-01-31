@@ -110,8 +110,14 @@ export class IpcBusTransportNode extends IpcBusTransport {
         this._reset();
     }
 
-    ipcPushCommand(command: string, channel: string, ipcBusData: IpcBusData, args?: any[]): void {
-        this._ipcPushCommand({ name: command, channel: channel, peer: this.peer, data: ipcBusData }, args);
+    ipcPushCommand(command: string, channel: string | RegExp, ipcBusData: IpcBusData, args?: any[]): void {
+        if (channel instanceof RegExp) {
+            ipcBusData.regExpChannel = true;
+            this._ipcPushCommand({ name: command, channel: channel.toString(), peer: this.peer, data: ipcBusData }, args);
+        }
+        else {
+            this._ipcPushCommand({ name: command, channel: channel, peer: this.peer, data: ipcBusData }, args);
+        }
     }
 
     protected _ipcPushCommand(ipcBusCommand: IpcBusCommand, args?: any[]): void {

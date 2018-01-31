@@ -18,6 +18,7 @@ export class IpcBusData {
     resolve?: boolean;
     reject?: boolean;
     unsubscribeAll?: boolean;
+    regExpChannel?: boolean;
 }
 
 /** @internal */
@@ -143,5 +144,5 @@ export abstract class IpcBusTransport {
 
     abstract ipcConnect(timeoutDelay: number, peerName?: string): Promise<string>;
     abstract ipcClose(): void;
-    abstract ipcPushCommand(command: string, channel: string, ipcBusData: IpcBusData, args?: any[]): void;
+    abstract ipcPushCommand(command: string, channel: string | RegExp, ipcBusData: IpcBusData, args?: any[]): void;
 }
